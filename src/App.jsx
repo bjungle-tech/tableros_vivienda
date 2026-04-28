@@ -1451,7 +1451,7 @@ export default function App() {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img src={`${import.meta.env.BASE_URL}logo-comfandi.png`} alt="COMFANDI" className="h-9 w-auto"/>
+            <img src={`${import.meta.env.BASE_URL}logo-comfandi.jpeg`} alt="COMFANDI" className="h-10 w-auto rounded"/>
             <div className="border-l border-gray-200 pl-4">
               <div className="text-base font-bold text-gray-900">Fábrica Digital de Vivienda</div>
               <div className="text-xs text-gray-500">UES Vivienda · Suite ejecutiva de tableros de control</div>
@@ -1513,14 +1513,13 @@ export default function App() {
         )}
       </main>
 
-      {/* Footer con BJungle / BWolf */}
+      {/* Footer con BWolf */}
       <footer className="bg-white border-t border-gray-200">
         <div className="px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-gray-500">
           <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded-md flex items-center justify-center text-white text-[10px] font-bold"
-                 style={{ background: `linear-gradient(135deg, ${C.azulPrimario} 0%, ${C.verdeLima} 100%)` }}>BJ</div>
-            <div className="leading-tight">
-              <div className="font-semibold text-gray-700">BWolf · Plantilla BJungle</div>
+            <img src={`${import.meta.env.BASE_URL}logo-bwolf.png`} alt="BWolf" className="h-9 w-auto"/>
+            <div className="leading-tight border-l border-gray-200 pl-3">
+              <div className="font-semibold text-gray-700">Motor de analítica e inteligencia de negocios</div>
               <div className="text-[11px] text-gray-500">© 2026 BJungle SAS · www.bjungle.net</div>
             </div>
           </div>
