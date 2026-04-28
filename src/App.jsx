@@ -1517,10 +1517,10 @@ export default function App() {
       <footer className="bg-white border-t border-gray-200">
         <div className="px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-gray-500">
           <div className="flex items-center gap-3">
-            <img src={`${import.meta.env.BASE_URL}logo-bwolf.png`} alt="BWolf" className="h-9 w-auto"/>
-            <div className="leading-tight border-l border-gray-200 pl-3">
-              <div className="font-semibold text-gray-700">Motor de analítica e inteligencia de negocios</div>
-              <div className="text-[11px] text-gray-500">© 2026 BJungle SAS · www.bjungle.net</div>
+            <img src={`${import.meta.env.BASE_URL}logo-bwolf.png`} alt="BWolf" className="h-16 w-auto"/>
+            <div className="leading-tight border-l border-gray-200 pl-4">
+              <div className="font-semibold text-gray-700 text-sm">Motor de analítica e inteligencia de negocios</div>
+              <div className="text-[11px] text-gray-500 mt-0.5">© 2026 BJungle SAS · www.bjungle.net</div>
             </div>
           </div>
           <div className="flex items-center gap-4">
