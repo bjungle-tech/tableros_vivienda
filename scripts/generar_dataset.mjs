@@ -57,7 +57,8 @@ const etapas = [
   { etapa: 'Vinculación fiducia', peso: 6, estado: 'Activo' },
   { etapa: 'Formalización (Firma)', peso: 5, estado: 'Activo' },
   { etapa: 'Finalización', peso: 12, estado: 'Cerrado_exitoso' },
-  { etapa: 'Desistido', peso: 18, estado: 'Cerrado_desistido' },
+  { etapa: 'Cierre de Brechas', peso: 4, estado: 'En_brechas' },
+  { etapa: 'Desistido', peso: 14, estado: 'Cerrado_desistido' },
   { etapa: 'No viable RPA', peso: 5, estado: 'Cerrado_no_viable' },
   { etapa: 'Validador rechazó', peso: 2.5, estado: 'Cerrado_no_viable' },
   { etapa: 'Sancionado', peso: 0.5, estado: 'Sancionado' },
@@ -134,9 +135,13 @@ function pasoPor(etapaActual, etapaConsulta) {
     return ordenEtapas.indexOf(etapaConsulta) <= ordenEtapas.indexOf('Validador derechos');
   }
   if (etapaActual === 'Desistido') {
-    // Se desistió en alguna etapa intermedia
+    // Se desistió en alguna etapa intermedia (Contacto, Prospección, Cotización o Cierre financiero)
     const etapaSalida = ['Contacto exitoso', 'Prospección', 'Cotización', 'Cierre financiero'][Math.floor(Math.random() * 4)];
     return ordenEtapas.indexOf(etapaConsulta) <= ordenEtapas.indexOf(etapaSalida);
+  }
+  if (etapaActual === 'Cierre de Brechas') {
+    // Cierre de Brechas: pasó por Cierre financiero pero no superó las condiciones comerciales
+    return ordenEtapas.indexOf(etapaConsulta) <= ordenEtapas.indexOf('Cierre financiero');
   }
   // Caso normal: pasó por todas las etapas hasta la actual (o anterior)
   const idxActual = ordenEtapas.indexOf(etapaActual);

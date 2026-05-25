@@ -198,6 +198,7 @@ function deriveFunnel(data) {
   const prospeccion = data.filter(r => r.sla_prospeccion != null).length;
   const cotizacion = data.filter(r => r.sla_cotizacion != null).length;
   const cierre = data.filter(r => r.sla_cierre != null).length;
+  const enBrechas = data.filter(r => r.estado === 'En_brechas').length;
   const formalizacion = data.filter(r => r.sla_formalizacion != null).length;
   const finalizacion = data.filter(r => r.estado === 'Cerrado_exitoso').length;
 
@@ -208,6 +209,7 @@ function deriveFunnel(data) {
     { etapa: 'Prospección', valor: prospeccion, conversion: parseFloat((prospeccion / total * 100).toFixed(1)) },
     { etapa: 'Cotización', valor: cotizacion, conversion: parseFloat((cotizacion / total * 100).toFixed(1)) },
     { etapa: 'Cierre financiero', valor: cierre, conversion: parseFloat((cierre / total * 100).toFixed(1)) },
+    { etapa: 'Cierre de Brechas', valor: enBrechas, conversion: parseFloat((enBrechas / total * 100).toFixed(1)), tipo: 'salida_recuperable' },
     { etapa: 'Formalización (Firma)', valor: formalizacion, conversion: parseFloat((formalizacion / total * 100).toFixed(1)) },
     { etapa: 'Finalización', valor: finalizacion, conversion: parseFloat((finalizacion / total * 100).toFixed(1)) },
   ];
@@ -638,11 +640,23 @@ const TableroFunnel = ({ data, filtros, setFiltros, totalRegistros }) => {
           </SectionTitle>
           <div className="space-y-2">
             {funnel.map((f, i) => {
-              const dropoff = i > 0 ? funnel[i - 1].valor - f.valor : 0;
+              const esRecuperable = f.tipo === 'salida_recuperable';
+              const prevAvanza = i > 0 && funnel[i - 1].tipo !== 'salida_recuperable' ? funnel[i - 1] : (i > 1 ? funnel[i - 2] : funnel[i - 1]);
+              const dropoff = i > 0 && !esRecuperable ? Math.max(0, prevAvanza.valor - f.valor) : 0;
+              const gradiente = esRecuperable
+                ? `linear-gradient(90deg, ${C.ambar} 0%, #FCD34D 100%)`
+                : `linear-gradient(90deg, ${C.azulPrimario} 0%, ${C.cyan} 100%)`;
               return (
                 <div key={i} className="group">
                   <div className="flex items-center justify-between mb-1 text-xs">
-                    <span className="font-medium text-gray-700">{i + 1}. {f.etapa}</span>
+                    <span className="font-medium text-gray-700 flex items-center gap-1.5">
+                      {esRecuperable ? '↳' : `${i + 1}.`} {f.etapa}
+                      {esRecuperable && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold" style={{ background: `${C.ambar}20`, color: C.ambar }}>
+                          salida recuperable
+                        </span>
+                      )}
+                    </span>
                     <div className="flex items-center gap-3">
                       {dropoff > 0 && <span className="text-red-500">−{dropoff.toLocaleString()}</span>}
                       <span className="font-semibold text-gray-900">{f.valor.toLocaleString()}</span>
@@ -653,12 +667,17 @@ const TableroFunnel = ({ data, filtros, setFiltros, totalRegistros }) => {
                     <div className="h-full rounded-md flex items-center justify-end pr-2 transition-all"
                          style={{
                            width: `${f.conversion}%`,
-                           background: `linear-gradient(90deg, ${C.azulPrimario} 0%, ${C.cyan} 100%)`
+                           background: gradiente,
                          }}/>
                   </div>
                 </div>
               );
             })}
+          </div>
+          <div className="mt-3 text-xs text-gray-600 leading-relaxed border-t border-gray-100 pt-3 bg-amber-50 -mx-1 px-3 py-2 rounded">
+            <strong style={{ color: C.ambar }}>Cierre de Brechas:</strong> trámites que pasaron Cierre financiero pero no
+            cumplen las condiciones comerciales definidas. <strong>No son deserciones</strong> — se asume que los titulares
+            trabajarán en mejorar su situación económica y persistirán con el trámite.
           </div>
         </Card>
 
@@ -925,26 +944,36 @@ const TableroRiesgo = ({ data, metas, filtros, setFiltros, totalRegistros }) => 
   const rpaResp = useMemo(() => deriveRPARespuestas(data), [data]);
   const sancionados = rpaResp.find(r => r.tipo === 'Sancionado')?.cantidad || 0;
   const desistidos = data.filter(r => r.estado === 'Cerrado_desistido').length;
+  const enBrechas = data.filter(r => r.estado === 'En_brechas').length;
 
   return (
     <div>
       <FilterBar filtros={filtros} setFiltros={setFiltros} totalRegistros={totalRegistros} registrosFiltrados={data.length}/>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-5">
-        <KPICard icon={AlertTriangle} label="Tasa deserción" value={kpis.desercionRate} format="percent" color={C.rojo} meta={metas.kpi.desercionRate} info="Solicitudes que entran al pipeline y se cierran por causal comercial. NO incluye rechazos del Validador ni 'No viable' del RPA."/>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-5">
+        <KPICard icon={AlertTriangle} label="Tasa deserción" value={kpis.desercionRate} format="percent" color={C.rojo} meta={metas.kpi.desercionRate} info="Solicitudes que entran al pipeline y se cierran por causal comercial. NO incluye rechazos del Validador, 'No viable' del RPA, ni Cierre de Brechas (que es recuperable)."/>
         <KPICard icon={XCircle} label="Desistidos" value={desistidos} color={C.ambar}/>
+        <KPICard icon={Clock} label="En Cierre de Brechas" value={enBrechas} color={C.ambar} info="Trámites que pasaron Cierre financiero pero no cumplen las condiciones comerciales definidas. NO son deserciones — se asume que los titulares trabajarán en mejorar su situación económica y persistirán con el trámite."/>
         <KPICard icon={Activity} label="Sancionados (Min. Vivienda)" value={sancionados} color={C.azulOscuro} info="Respuesta del RPA cuando el postulante figura como sancionado en la página de subsidios del Ministerio de Vivienda."/>
         <KPICard icon={CheckCircle2} label="% Aprobación crédito" value={kpis.aprobacionCredito} format="percent" color={C.verdeLima} meta={metas.kpi.aprobacionCredito} info="Aprobaciones / solicitudes que llegaron a evaluación crediticia."/>
       </div>
 
       <Card className="mb-5" style={{ borderLeft: `4px solid ${C.azulPrimario}` }}>
         <SectionTitle>Definiciones de los indicadores</SectionTitle>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs leading-relaxed">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs leading-relaxed">
           <div>
             <div className="font-semibold text-gray-900 mb-1">¿Qué es Deserción?</div>
             <div className="text-gray-600">
               Solicitud que entró al pipeline (Solicitud creada en adelante), no llegó a Finalización, y fue cerrada por causal <strong>no técnica</strong>:
               decisión del hogar, no califica financieramente, no responde, encontró otra opción.
-              <strong> No cuenta</strong> rechazo del Validador de derechos ni "No viable" del RPA.
+              <strong> No cuenta</strong> rechazo del Validador, "No viable" del RPA, ni Cierre de Brechas.
+            </div>
+          </div>
+          <div>
+            <div className="font-semibold text-gray-900 mb-1">¿Qué es Cierre de Brechas?</div>
+            <div className="text-gray-600">
+              Estado terminal <strong>recuperable</strong> donde caen los trámites que no alcanzaron a cumplir las condiciones comerciales definidas
+              (post Cierre financiero), pero <strong>no son deserciones</strong>. Se asume que los titulares trabajarán en mejorar su situación
+              económica y regresarán a persistir con el trámite. Se monitorea para gestionar re-engagement proactivo.
             </div>
           </div>
           <div>
